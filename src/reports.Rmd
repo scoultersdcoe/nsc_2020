@@ -1,0 +1,307 @@
+---
+title: "National Student Clearinghouse, 2012-2020"
+subtitle: "State of College Report"
+author: "Shannon Coulter"
+date: "7/30/2021"
+output: html_document
+---
+```{r libraries, message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(forcats)
+library(RColorBrewer)
+library(here)
+library(purrr)
+library(ggforce)
+library(fivethirtyeight)
+library(ggthemes)
+library(extrafont)
+library(ggrepel)
+library(ggh4x)
+library(ggpubr)
+loadfonts(device = "win")
+```
+
+```{r load-data, include=FALSE}
+nsc20.1 <- read.csv(file = "../NSC 2020/output/nsc20.1.csv")
+```
+
+## Figure 1 Top College Attended
+```{r fig-1-data, include=FALSE}
+inst_enroll <- nsc20.1 %>%
+  filter(chrt_grad == 2020) %>%
+  group_by(school, college_name_y1) %>%
+  summarise(num_enrolled = length(college_name_y1)) %>%
+  mutate(college_name_y1 = as.factor(college_name_y1),
+         school = as.factor(school))
+
+inst_enroll_2 <- inst_enroll %>% 
+  drop_na() %>%
+  arrange(school,desc(num_enrolled)) %>%
+  slice_head(n = 5)
+```
+
+```{r fig-1}
+inst_enroll_2 %>%
+  split(inst_enroll_2$school) %>%
+  map(~ ggdotchart(.,
+                   x = "college_name_y1", y = "num_enrolled",
+                   group = "college_name_y1", color = "college_name_y1",
+                   sorting = "descending",
+                   palette = c("#30a2da","#fc4f30", "#e5ae38", "#6d904f", "#8b8b8b"),
+                   rotate = TRUE,                                # Rotate vertically
+                   dot.size = 4,                                 # Large dot size
+                   y.text.col = FALSE,
+                   ) +
+  geom_hline(yintercept = 0, size = 0.75, color = "#737373") +
+  ggtitle(.$school) +
+  labs(subtitle = "Most frequently attended 2 and 4 year colleges in 2020 \n by high school graduates",
+       caption = "Source: National Student Clearinghouse") +
+  scale_y_continuous(
+    name = "# Enrolled",
+    limits = c(0, 150),
+    breaks = seq(0, 150, by = 20)) +
+  ggthemes::theme_fivethirtyeight(base_size = 12, base_family = "Chivo") +
+  #scale_colour_fivethirtyeight() +
+  theme(
+    plot.title = element_text(color = "black"),
+    plot.subtitle = element_text(),
+    plot.caption = element_text(color = "gray50"),
+    text = element_text(family = "sans"),
+    axis.text.x = element_text(color = "gray50"),
+    axis.text.y = element_text(color = "gray50"),
+    legend.position = "none"
+  ))
+```
+
+## Figure 2. College Enrollment
+```{r fig-2-data}
+nsc_enroll <- nsc20.1 %>%
+  group_by(school, chrt_grad) %>%
+  summarise(enrolled = mean(college_enrolled)) %>%
+  mutate(school = as.factor(school),
+         chrt_grad = as.factor(chrt_grad))
+
+county_average <- nsc20.1 %>%
+  group_by(county, chrt_grad) %>%
+  summarise(enrolled = mean(college_enrolled)) %>%
+  mutate(county = as.factor(county),
+         chrt_grad = as.factor(chrt_grad))
+```
+
+```{r fig-2, warning=FALSE, message=FALSE}
+nsc_enroll %>%
+  split(nsc_enroll$school) %>%
+  map(~ggplot(., aes(x = chrt_grad, y = enrolled)) +
+  geom_line(
+    group = 1, 
+    size = 1.5,
+    color = "#e5ae38") +
+  geom_point(size = 2.5,
+             color = "#e5ae38") +
+  geom_text_repel(aes(
+    label = ifelse(chrt_grad == "2020", scales::percent(enrolled, accuracy = 2L), "")),
+    force        = 0.5,
+    nudge_x      = 0,
+    direction    = "y",
+    hjust        = 0,
+    segment.size = 0.2,
+    color        = "#e5ae38",
+    fontface     = "bold",
+    show.legend = FALSE) +
+  geom_line(county_average,
+            mapping = aes(x = chrt_grad, y = enrolled), 
+            group = 1,
+            size = 1.5,
+            color = "#30a2da") +
+  geom_point(county_average,
+             mapping = aes(x = chrt_grad, y = enrolled),
+             size = 2.5,
+             color = "#30a2da") +
+  geom_text_repel(county_average, mapping = aes(x = chrt_grad, y = enrolled,
+                                                label = ifelse(chrt_grad == "2020", 
+                                                               scales::percent(enrolled, accuracy = 2L), "")),
+                  force        = 0.5,
+                  nudge_x      = 0,
+                  direction    = "y",
+                  hjust        = 0,
+                  segment.size = 0.2, 
+                  color        = "#30a2da",
+                  fontface     = "bold",
+                  show.legend = FALSE) +
+  geom_hline(yintercept = 0, size = 0.75, color = "#737373") +
+  ggtitle(.$school) +
+  labs(subtitle = "Percentage of graduates enrolled in 2 and 4 year colleges from 2012 to 2020 \n compared to average enrollment across San Diego county",
+       caption = "Source: National Student Clearinghouse") +
+  scale_y_continuous(
+    name = "Year",
+    breaks = seq(.0, 1, by = .2),
+    labels = scales::percent_format(accuracy = 1)) +
+  ggthemes::theme_fivethirtyeight(base_size = 12, base_family = "Chivo") +
+  scale_colour_fivethirtyeight() +
+  theme(
+    plot.title = element_text(color = "black"),
+    plot.caption = element_text(color = "gray50"),
+    text = element_text(family = "sans"),
+    axis.text.x = element_text(color = "gray50"),
+    axis.text.y = element_text(color = "gray50")
+  ) +
+  annotate(
+    geom = "text", x = 9, y = 1, label = "County",
+    fontface = "bold", vjust = 1, color = "#30a2da") +
+  annotate(
+    geom = "text", x = 8, y = 1, label = "School",
+    fontface = "bold", vjust = 1, color = "#e5ae38")
+  )
+```
+
+## Figure 3. College Retention
+```{r fig-3-data}
+reten_schl <- nsc20.1 %>%
+  group_by(school, chrt_grad) %>%
+  filter(college_enrolled == TRUE, 
+         chrt_grad == 2019) %>%
+  mutate(retention = coalesce(college_name_y1, '') == coalesce(college_name_y2, ' ')) %>%
+  summarise(n_retention = sum(retention == TRUE, na.rm = TRUE),
+            n_enrolled = sum(college_enrolled == TRUE),
+            reten = mean(retention, na.rm = TRUE)) %>%
+  mutate(school = as.factor(school),
+         chrt_grad = as.factor(chrt_grad))
+
+county_average <- nsc20.1 %>%
+  group_by(county, chrt_grad) %>%
+  filter(college_enrolled == TRUE, 
+         chrt_grad == 2019) %>%
+  mutate(retention = coalesce(college_name_y1, '') == coalesce(college_name_y2, ' ')) %>%
+  summarise(n_retention = sum(retention == TRUE, na.rm = TRUE),
+            n_enrolled = sum(college_enrolled == TRUE),
+            reten = mean(retention, na.rm = TRUE)) %>%
+  mutate(county = as.factor(county),
+         chrt_grad = as.factor(chrt_grad))
+```
+
+```{r fig-3, warning=FALSE, message=FALSE}
+reten_schl %>% 
+  split(reten_schl$school) %>%
+  map(~ ggplot(., mapping = aes(x = chrt_grad, y = reten)) +
+  geom_pointrange(aes(ymin = 0, ymax = reten),
+           color = "#e5ae38", fatten = 5, size = 1.5) +
+  geom_pointrange(data = county_average, aes(ymin = 0, ymax = reten),
+           color = "#30a2da", fatten = 5, size = 1.5, position = position_nudge(x = 0.5)) +
+  geom_hline(yintercept = 0, size = 0.75, color = "#737373") +
+  ggtitle(.$school) +
+  labs(subtitle = "Percentage of students enrolled in 2 and 4 year colleges in 2019 \n retained by the starting instituion compared to the average retention in San Diego county",
+  caption = "Source: National Student Clearinghouse") +
+  coord_flip() +
+  scale_y_continuous(
+    name = "Year",
+    breaks = seq(.0, 1, by = .2),
+    labels = scales::percent_format(accuracy = 1)) +
+  ggthemes::theme_fivethirtyeight(base_size = 12, base_family = "Chivo") +
+  scale_colour_fivethirtyeight() +
+  theme(
+    plot.title = element_text(color = "black"),
+    plot.caption = element_text(color = "gray50"),
+    text = element_text(family = "sans"),
+    axis.text.x = element_text(color = "gray50"),
+    axis.text.y = element_text(color = "gray50")
+  ) +
+  annotate(
+    geom = "text", x = 0.5, y = .9, label = "County",
+    fontface = "bold", vjust = 0, color = "#30a2da") +
+  annotate(
+    geom = "text", x = 0.5, y = 1, label = "School",
+    fontface = "bold", vjust = 0, color = "#e5ae38")
+)
+```
+
+## Figure 4. College Completion
+```{r fig-4-data}
+# source completion data
+completion <- readRDS(file = "./data/completion.rds")
+
+college_completion <- nsc20.1 %>%
+  mutate(sid = as.factor(sid)) %>%
+  left_join(completion, by = "sid") %>%
+  dplyr::select(sid, college_enrolled, chrt_grad, county, district, school,
+                enroll_begin_y1, seamless_enroll, graduated, college_grad_date,
+                degree_title, major, college_sequence) %>%
+  filter(college_enrolled == TRUE,
+         chrt_grad == 2013 | chrt_grad == 2014) %>%
+  mutate(graduated = ifelse(graduated == "Y", 1, 0)) %>%
+  group_by(county, school, chrt_grad) %>%
+  summarise(graduated = mean(graduated)) %>%
+  mutate(school = as.factor(school),
+         chrt_grad = as.factor(chrt_grad))
+
+county_college_comp_average <- college_completion %>%
+  group_by(county, chrt_grad) %>%
+  summarize(graduated = mean(graduated))
+```
+
+```{r fig-4, warning=FALSE, message=FALSE}
+college_completion %>%
+  split(college_completion$school) %>%
+  map(~ggplot(., mapping = aes(x = chrt_grad, y = graduated)) +
+  geom_line(
+    group = 1, 
+    size = 1.5,
+    color = "#e5ae38") +
+  geom_point(size = 2.5,
+             color = "#e5ae38") +
+  geom_text_repel(aes(
+    label = ifelse(chrt_grad == "2014", scales::percent(graduated, accuracy = 2L), "")),
+    force        = 0.5,
+    nudge_x      = 0,
+    direction    = "y",
+    hjust        = 0,
+    segment.size = 0.2,
+    color        = "#e5ae38",
+    fontface     = "bold",
+    show.legend = FALSE) +
+  geom_line(county_college_comp_average,
+            mapping = aes(x = chrt_grad, y = graduated), 
+            group = 1,
+            size = 1.5,
+            color = "#30a2da") +
+  geom_point(county_college_comp_average,
+             mapping = aes(x = chrt_grad, y = graduated),
+             size = 2.5,
+             color = "#30a2da") +
+  geom_text_repel(county_college_comp_average, mapping = aes(x = chrt_grad, y = graduated,
+                                                label = ifelse(chrt_grad == "2014", 
+                                                               scales::percent(graduated, accuracy = 2L), "")),
+                  force        = 0.5,
+                  nudge_x      = 0,
+                  direction    = "y",
+                  hjust        = 0,
+                  segment.size = 0.2, 
+                  color        = "#30a2da",
+                  fontface     = "bold",
+                  show.legend = FALSE) +
+  geom_hline(yintercept = 0, size = 0.75, color = "#737373") +
+  ggtitle(.$school) +
+  labs(subtitle = "Percentage of students graduating from 2 and 4 year colleges from 2012 to 2014 \n compared to average graduation rates across San Diego county",
+       caption = "Source: National Student Clearinghouse") +
+  scale_y_continuous(
+    name = "Year",
+    limits = c(0,.6),
+    breaks = seq(.0, .6, by = .2),
+    labels = scales::percent_format(accuracy = 1)) +
+  ggthemes::theme_fivethirtyeight(base_size = 12, base_family = "Chivo") +
+  scale_colour_fivethirtyeight() +
+  theme(
+    plot.title = element_text(color = "black"),
+    plot.caption = element_text(color = "gray50"),
+    text = element_text(family = "sans"),
+    axis.text.x = element_text(color = "gray50"),
+    axis.text.y = element_text(color = "gray50")
+  ) +
+  annotate(
+    geom = "text", x = 2.3, y = .55, label = "County",
+    fontface = "bold", vjust = 0, color = "#30a2da") +
+  annotate(
+    geom = "text", x = 2.1, y = .55, label = "School",
+    fontface = "bold", vjust = 0, color = "#e5ae38")
+  )
+```
