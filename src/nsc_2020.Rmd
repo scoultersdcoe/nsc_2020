@@ -1,8 +1,8 @@
 ---
-title: "National Student Clearinghouse, 2012-2020"
-subtitle: "State of College Report"
-author: "Shannon Coulter"
-date: "`r format(Sys.time(), '%F')`"
+title: "**College Going in San Diego County**"
+author: "Shannon Coulter, *San Diego County Office of Education*"
+affiliation: "San Diego County Office of Education"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output: hrbrthemes::ipsum_pdf
 params:
   school: "Canyon Crest Academy"
@@ -31,13 +31,11 @@ loadfonts(device = "win")
 nsc20.1 <- read.csv(file = here("src/nsc20.1.csv"))
 ```
 
-# Overview
+## Overview
 
-Every year hundreds of San Diego high schools graduate more than 30,000 seniors.
-Many of these graduates go on to enroll in college and attain a degree. The San
-Diego County Office of Education's (SDCOE) State of College Report provides
-information for schools who share data with the National Student Clearinghouse
-(NSC) to answer the following questions:
+Every year over 150 San Diego high schools graduate more than 30,000 seniors. Many of these graduates go on to enroll in college and attain a degree. The San Diego County Office of Education's (SDCOE) college-going report [^1] provides information for schools who share data with the National Student Clearinghouse (NSC) to answer the following questions:
+
+[^1]: National Student Clearinghouse, 2012-2020.
 
 1.  Where are students going to college?
 2.  What percentage of students enroll in college?
@@ -46,30 +44,17 @@ information for schools who share data with the National Student Clearinghouse
 
 ## Data Background
 
-SDCOE downloads data from the NSC annually on February 15. To receive a school
-report, high schools must upload an error-free graduates file. SDCOE pulls the
-data for these reports directly from the NSC. Any errors in a district's
-graduates file contributes to errors contained in these reports. School level
-errors also affect county averages.
+There is an annual cycle of steps that support creating this report. In the fall, districts submit a list of the past year's graduates for each high school to the NSC. On the following February 15, SDCOE pulls data directly from the NSC to prepare this report. To receive a complete school report, the high school data must be error-free. Any errors in a district's graduates file contributes to errors contained in these reports including county averages. If you have questions about this report, please contact [Shannon Coulter](scoulter@sdcoe.net).
 
-# State of College Report
+## College-Going Rates
 
-In 2020, local high schools reported approximately 26,514 high school graduates
-to the NSC; the NSC matched 15,964 of these graduates to enrollment records at
-over 1900 colleges and universities. NSC records fluctuate annually depending on
-the districts who upload data to the NSC by November. The following graphs
-depict where these students enrolled, the percent enrolled, the percent of
-students from the class of 2019 who stayed at the college where they first
-enrolled, and the percent of students from the classes of 2013 and 2014 who
-completed a degree.
+In 2020, local high schools reported approximately 26,514 high school graduates to the NSC; the NSC matched 15,964 of these graduates to enrollment records at over 1,900 colleges and universities. NSC records fluctuate annually depending on the districts who upload data to the NSC by November. The following graphs depict where these students enrolled, the percent enrolled, the percent of students from the class of 2019 who stayed at the college where they first enrolled, and the percent of students from the classes of 2013 and 2014 who completed a degree.
 
 \newpage
 
 ## College Enrollment
 
-Students across San Diego County attend over 1900 higher education institutions.
-Most students graduating from `r params$school` attended the following
-institutions in 2020.
+Students across San Diego County attend over 1,900 higher education institutions. Most students graduating from `r params$school` attended the following institutions in 2020.
 
 ```{r fig-1-data, include=FALSE}
 inst_enroll <- nsc20.1 %>%
@@ -121,10 +106,7 @@ inst_enroll_2 %>% # wrap this in a ifelse
   }
 ```
 
-The next graph illustrates the percent of graduates from `r params$school`
-enrolled in 2 and 4 year colleges between 2012 to 2020 compared to the average
-enrollment rates across San Diego county. San Diego County had a steep decline
-in college enrollment during the pandemic.
+The next graph illustrates the percent of graduates from `r params$school` enrolled in 2- or 4-year colleges between 2012 to 2020 compared to the average enrollment rates across San Diego county. San Diego County had a steep decline in college enrollment during the pandemic. *Note:* In cases with no school data, we show county averages only.
 
 ```{r fig-2-data, include=FALSE}
 nsc_enroll <- nsc20.1 %>%
@@ -183,7 +165,7 @@ nsc_enroll %>%
                   show.legend = FALSE) +
   geom_hline(yintercept = 0, size = 0.75, color = "#737373") +
   ggtitle(nsc_enroll$school) +
-  labs(subtitle = "Percentage of graduates enrolled in 2 and 4 year colleges from 2012 to 2020 \n compared to average enrollment across San Diego county",
+  labs(subtitle = "Percentage of graduates enrolled in 2 and 4 year colleges from 2012 to 2020 \ncompared to average enrollment across San Diego county",
        caption = "Source: National Student Clearinghouse") +
   scale_y_continuous(
     name = "Year",
@@ -209,9 +191,7 @@ nsc_enroll %>%
 
 ## College Retention
 
-This figure illustrates the percent of students who are retained by their
-starting institution. Retention is a key factor in college completion. The more
-students who remain at their starting institution, the more students graduate.
+This figure illustrates the percent of students who are retained by their starting institution. Retention is a key factor in college completion. The more students who remain at their starting institution, the more students graduate.
 
 ```{r fig-3-data, include=FALSE}
 reten_schl <- nsc20.1 %>% #provide a 0 if no data
@@ -250,7 +230,7 @@ reten_schl %>%
                        color = "#30a2da", fatten = 5, size = 1.5, position = position_nudge(x = 0.5)) +
        geom_hline(yintercept = 0, size = 0.75, color = "#737373") +
        ggtitle(reten_schl$school) +
-       labs(subtitle = "Percentage of students enrolled in 2 and 4 year colleges in 2019 retained by the \n starting instituion compared to the average retention in San Diego county",
+       labs(subtitle = "Percentage of students enrolled in 2 and 4 year colleges in 2019 retained by the \nstarting instituion compared to the average retention in San Diego county",
             caption = "Source: National Student Clearinghouse") +
        coord_flip() +
        scale_y_continuous(
@@ -263,7 +243,8 @@ reten_schl %>%
          plot.caption = element_text(color = "gray50"),
          text = element_text(family = "sans"),
          axis.text.x = element_text(color = "gray50"),
-         axis.text.y = element_text(color = "gray50")
+         axis.text.y = element_text(color = "gray50"),
+         panel.grid.major = element_line(linetype = "blank")
        ) +
        annotate(
          geom = "text", x = 0.5, y = 1, label = "County",
@@ -272,16 +253,12 @@ reten_schl %>%
          geom = "text", x = 0.5, y = .9, label = "School",
          fontface = "bold", vjust = 0, color = "#e5ae38")
   } 
-  }
+  } 
 ```
 
 ## College Completion
 
-The college graduation rates for the students who completed high school in 2013
-and 2014 is about 20% countywide (i.e., a six-year graduation rate). Note:
-Colleges report graduation rates many different ways. This percentage might be
-higher if we count college graduates who completed high school after 2013 and
-2014.
+The college graduation rates for the students who completed high school in 2013 and 2014 is about 20% countywide (i.e., a six-year graduation rate). *Note:* Colleges report graduation rates many different ways. This percentage might be higher if we count college graduates who completed high school after 2013 and 2014.
 
 ```{r fig-4-data, include=FALSE}
 completion <- read.csv(file = here("src/completion.csv"))
@@ -349,7 +326,7 @@ college_completion_2 %>%
                   show.legend = FALSE) +
   geom_hline(yintercept = 0, size = 0.75, color = "#737373") +
   ggtitle(college_completion_2$school) +
-  labs(subtitle = "Percentage of graduates from classes of 2013 to 2014 compared to average \n graduation rates for these classes across San Diego county",
+  labs(subtitle = "Percentage of graduates from classes of 2013 to 2014 compared to average \ngraduation rates for these classes across San Diego county",
        caption = "Source: National Student Clearinghouse") +
   scale_y_continuous(
     name = "Year",
